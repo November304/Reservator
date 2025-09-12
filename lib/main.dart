@@ -1,7 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:reservator/repositories/events_repository.dart';
+import 'package:reservator/services/graphql_service.dart';
 
-void main() {
+void main() async {
+  // WidgetsFlutterBinding.ensureInitialized();
+  
+  // await GraphQLService.instance.init();
+  // await _testEventRepo();
+  
   runApp(const MyApp());
+
+}
+
+Future<void> _testEventRepo() async {
+  try {
+    print('🔄 Test du repository...');
+    
+    final events = await EventsRepository.instance.getEvents();
+    
+    print('✅ Récupéré ${events.length} événements');
+    
+    for (final event in events) {
+      print('📅 Event: ${event.title} (${event.tickets.length} tickets)');
+      
+      for (final ticket in event.tickets) {
+        print('  🎫 ${ticket.fullName} - ${ticket.minimumPrice}€ - Open: ${ticket.open}');
+      }
+    }
+    
+  } catch (e) {
+    print('❌ Erreur: $e');
+  }
 }
 
 class MyApp extends StatelessWidget {
