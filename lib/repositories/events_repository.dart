@@ -32,7 +32,37 @@ class EventsRepository {
     final result = await _graphql.client.value.query(
       QueryOptions(document: gql(query))
     );
+    if(result.hasException) throw Exception(result.exception);
     print(result);
-    return [];
+    final response = EventsByDayResponse.fromJson(result.data!);
+    return response.events;
   }
+}
+
+class EventNode {
+  final List<Event> happening;
+
+  EventNode({required this.happening});
+
+  factory EventNode.fromJson(Map<String, dynamic> json) => EventNode(
+    happening: (json['happening'] as List<dynamic>)
+        .map((eventJson) => Event.fromJson(eventJson))
+        .toList(),
+  );
+}
+
+class EventsByDayResponse {
+  final List<EventNode> nodes;
+
+  EventsByDayResponse({required this.nodes});
+
+  factory EventsByDayResponse.fromJson(Map<String, dynamic> json) => EventsByDayResponse(
+    nodes: (json['eventsByDay']['nodes'] as List<dynamic>)
+        .map((nodeJson) => EventNode.fromJson(nodeJson))
+        .toList(),
+  );
+
+  List<Event> get events => nodes
+      .expand((node) => node.happening)
+      .toList();
 }

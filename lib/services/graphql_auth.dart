@@ -38,6 +38,8 @@ class AuthService{
         }
       }
     ''';
+
+    await dotenv.load(fileName: '.env');
     
     final result = await _client.mutate(MutationOptions(
       document: gql(mutation),
@@ -46,7 +48,7 @@ class AuthService{
         'password': dotenv.env['PASSWORD']!,
       },
     ));
-    
+
     final login = result.data?['login'];
     if (login?['data'] != null) {
       _token = login['data']['token'];
