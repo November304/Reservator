@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:reservator/models/event.dart';
 import 'package:reservator/models/reservation.dart';
@@ -223,16 +225,78 @@ class _ReservationPageState extends State<ReservationPage> {
 
   Future<void> _scheduleResa(Reservation res, BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
-    String result = await TicketsRepository.instance.reserveTicket(res.ticketId, res.bookingUrl);
-    if(!mounted) return;
-    if(result == "success")
-    {
-      messenger.showSnackBar(SnackBar(content: Text("Reservation réussie")));
+    try {
+      final now = DateTime.now();
+      final bookingTime = res.bookingTime;
+      final refreshTokenTime = bookingTime.subtract(Duration(seconds: 2));
+
+      if(bookingTime.isBefore(now))
+      {
+        await GraphQLService.instance.init();
+        String result = await TicketsRepository.instance.reserveTicket(res.ticketId, res.bookingUrl);
+        if(!mounted) return;
+        if(result == "success")
+        {
+          messenger.showSnackBar(SnackBar(content: Text("Reservation réussie")));
+        }
+        else 
+        {
+          messenger.showSnackBar(SnackBar(content: Text("Erreur : $result")));
+        }
+        return;
+      }
+
+      if (refreshTokenTime.isAfter(now)) {
+        final delayUntilTokenRefresh = refreshTokenTime.difference(now);
+        Timer(delayUntilTokenRefresh, () async {
+          try {
+            await GraphQLService.instance.init();
+            print("Tokens refreshed at ${DateTime.now()}");
+          } catch (e) {
+            print("Failed to refresh tokens: $e");
+          }
+        });
+      } else {
+        await GraphQLService.instance.init();
+        print("Tokens refreshed immediately");
+      }
+
+      final delayUntilBooking = bookingTime.difference(now);
+
+      Timer(delayUntilBooking, () async {
+        if (!mounted) return;
+        
+        try {
+          String result = await TicketsRepository.instance.reserveTicket(
+            res.ticketId, 
+            res.bookingUrl
+          );
+          
+          if (!mounted) return;
+          
+          if (result == "success") {
+            messenger.showSnackBar(SnackBar(
+              content: Text("Réservation réussie")
+            ));
+          } else {
+            messenger.showSnackBar(SnackBar(
+              content: Text("Erreur : $result")
+            ));
+          }
+        } catch (e) {
+          if (!mounted) return;
+          messenger.showSnackBar(SnackBar(
+            content: Text("Erreur lors de la réservation : $e")
+          ));
+        }
+      });
+
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(
+        content: Text("Erreur lors de la programmation : $e")
+      ));
     }
-    else 
-    {
-      messenger.showSnackBar(SnackBar(content: Text("Erreur : $result")));
-    }
+      
   }
 
   @override
