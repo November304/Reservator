@@ -24,6 +24,8 @@ class EventsRepository {
                 open
                 opensAt
                 openToContributors
+                placesLeft
+                capacity
               }
             }
           }
@@ -33,12 +35,13 @@ class EventsRepository {
       QueryOptions(document: gql(query))
     );
     if(result.hasException) throw Exception(result.exception);
-    print(result);
+
     final response = EventsByDayResponse.fromJson(result.data!);
     return response.events;
   }
 }
 
+//Classe intermediaires pour recup les events depuis le json
 class EventNode {
   final List<Event> happening;
 

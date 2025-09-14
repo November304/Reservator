@@ -5,6 +5,9 @@ class Ticket {
   final bool open;
   final DateTime? opensAt;
   final bool openToContributors;
+  final bool isUnlimited;
+  final int? capacity;
+  final int? placesLeft;
   
   Ticket({
     required this.id,
@@ -13,6 +16,9 @@ class Ticket {
     required this.open,
     this.opensAt,
     required this.openToContributors,
+    required this.isUnlimited,
+    required this.capacity,
+    required this.placesLeft
   });
   
   factory Ticket.fromJson(Map<String, dynamic> json) => Ticket(
@@ -24,5 +30,8 @@ class Ticket {
         ? DateTime.parse(json['opensAt']) 
         : null,
     openToContributors: json['openToContributors'] ?? false,
+    isUnlimited: json['capacity'] == "Unlimited",
+    capacity: json['capacity'] == "Unlimited" ? null : json['capacity'],
+    placesLeft: json['capacity'] == "Unlimited" ? null : json['placesLeft'],
   );
 }
